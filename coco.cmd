@@ -5,29 +5,22 @@
 :: file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 cmd /c "exit 0"
+setlocal enabledelayedexpansion
 
-setlocal
-
-if "%1"=="" goto :help
-FOR %%G IN ("build"
-     "run"
-     "help") DO (
-    IF /I "%1"=="%%~G" goto run
-)
-
-echo Error: Command `%1' unknown
+call :%*
 exit /b
 
-:run
-goto :%1
-
-rem Make sure to pass in argument to the target as well
-
 :build
-    rem if "%2"=="" build everything
+    :: echo %1
+    if "%1"=="" (
+        dir /s /b src | findstr /e \.java > temp
+        set sourcefile=@temp
+        ::for /f "delims=" %%i in ('dir /s /b src ^| findstr /e \.java') do if "!sourcefile!"=="" (set sourcefile=%%i) else (set sourcefile=!sourcefile! %%i)
+        echo !sourcefile!
+        goto :build_inner
+    )
 
-    rem there must be an easier way to do this
-    set filepath=%2
+    set filepath=%1
     set filepath=%filepath:.=\\%
     set sourcefile=src\\%filepath%.java
     set targetfile=out\\%filepath%.class
@@ -35,25 +28,23 @@ rem Make sure to pass in argument to the target as well
     FOR %%i IN (%soucefile%) DO SET sourceAge=%%~ti
     FOR %%i IN (%targetfile%) DO SET targetAge=%%~ti
 
-    if "%sourceAge%"=="%targetAge%" goto :build_always
+    if "%sourceAge%"=="%targetAge%" goto :build_inner
 
     FOR /F %%i IN ('DIR /B /O:D %soucefile% %targetfile%') DO SET NEWEST=%%~xi
-    echo %NEWEST%
     if "%NEWEST%"==".class" exit /b
 
-    :build_always
-        echo building...
-        javac -cp "lib;out" -sourcepath src -d out %sourcefile%
+    :build_inner
+        echo building...%filepath%
+        javac -cp "lib;out" -sourcepath src -d out !sourcefile!
+        2>del temp
         exit /b
 
 :run
-    call :build %* && java -cp "lib;out" %2 
+    :: echo %*
+    :: Do something with args
+    call :build %* && java -cp "lib;out" %1
     exit /b
 
 :help
     echo "No help for you"
-    exit /b
-
-:setAge
-    FOR %%i IN (%~1) DO SET %~2=%%~ti
     exit /b
