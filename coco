@@ -1,0 +1,53 @@
+#!/usr/bin/env perl
+
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+use strict;
+use warnings;
+
+# initialize config
+my %args = (
+    cmd => shift @ARGV // "--help",
+    sub => [],
+    src => "src",
+    out => "out",
+    lib => "lib",
+);
+
+# add to config
+push(@{$args{"sub"}}, shift @ARGV) while defined $ARGV[0] && $ARGV[0] =~ /^(?!-)/;
+
+if ($args{"cmd"} eq "--help") { help() }
+elsif ($args{"cmd"} eq "build") { build() }
+elsif ($args{"cmd"} eq "run") { run() }
+else { die "coco: '$args{\"cmd\"}' is not a coco command. See 'coco --help'." }
+
+sub help {
+    #print defined shift, "\n";
+    print "No help for you";
+}
+
+sub build {
+
+}
+
+sub run {
+    build();
+    my $path = $args{"sub"}->[0] // die "No path found";
+    if ($path =~ /^(?!\/)(?:(?:^|\/)[a-zA-Z_\$][\w\$]*)+\.(java|class|jar)$/) {
+        if ($1 eq "jar") {
+            die "Opperation currently unsupported: unable to exectue jar file";
+        }
+        else {
+            my $classpath = $path =~ s/\.$1$//gr =~ s/\//./gr;
+            system "java -cp \"$args{\"lib\"};$args{\"out\"}\" $classpath";
+        }
+    }
+}
+
+# sub paths {
+#     my path = shift // die "No path found";
+#     if (path =~ //)
+# }
