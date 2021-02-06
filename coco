@@ -6,6 +6,20 @@
 
 use strict;
 use warnings;
+# this makes ansi codes work on windows
+use Win32::Console::ANSI;
+
+BEGIN {
+    *CORE::GLOBAL::die = sub {
+        CORE::die(@_) if $^S;
+        print STDERR "\e[31m[error]\e[0m @_\n";
+        exit 1;
+    };
+
+    *CORE::GLOBAL::warn = sub {
+        print STDERR "\e[33m[warning]\e[0m @_\n";
+    };
+}
 
 # initialize config
 my %args = (
